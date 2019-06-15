@@ -1,0 +1,34 @@
+from microbit import *
+import radio
+radio.on() # Turns the radio on
+import music
+state = 'idle' # Puts in the idle state which is so we can start the game without interrupting the other states
+display.scroll('Press Button B To Start The Game', wait = False, loop = True) #Instructs the user to start the game
+while True:
+    if button_b.was_pressed() and state == 'idle': #When B is pressed the game starts and changed the state from idle to send
+        state = 'send' 
+        display.clear()
+        sleep(100)
+    if state == 'send' or state == 'winning':
+        radio.send('marco') #Now that the state is changed the mircobit sends messages to the end point mircobit
+        sleep(100) 
+    msg = radio.receive()
+    if msg and state == 'send':
+        if 'winning' in msg: #Checks to see if "winning" is in the message and if it is then a happy face will display and happy music 
+            display.show(Image.HAPPY, wait = False)
+            music.play(music.ENTERTAINER, wait = False)
+            if button_a.was_pressed(): #When button a is pressed the display clears and the state is changed to winning, happy music is played and a message scrolls past congratulating the winner
+                display.clear()
+                state = 'winning' 
+                music.play(music.ENTERTAINER, wait = False)
+                display.scroll('Congratulations you won!', wait = False)
+                radio.send('win')
+        elif 'winning' not in msg: #If winning isn't in the message is clears the display and stops the music and changes the state to send 
+            display.clear()
+            music.stop()
+            state = 'send'
+    if msg:
+        if 'reset' in msg: #If the mircobit gets a reset message it clears the display and stops the music and changes the state to idle
+            display.clear()
+            music.stop()
+            state = 'idle'
